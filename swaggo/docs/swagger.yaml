@@ -1,0 +1,316 @@
+basePath: /api/v1
+definitions:
+  handlers.CreateRentalRequest:
+    properties:
+      car_id:
+        type: integer
+      rental_end:
+        type: string
+      rental_start:
+        type: string
+    required:
+    - car_id
+    - rental_end
+    - rental_start
+    type: object
+  handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.WebhookPayload:
+    properties:
+      amount:
+        type: number
+      external_id:
+        example: rental-123
+        type: string
+      status:
+        example: PAID
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@car-rental.com
+    name: API Support
+  description: API documentation for Car Rental Service.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Car Rental API
+  version: "1.0"
+paths:
+  /api/v1/cars:
+    get:
+      description: Retrieve a list of all available cars
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of cars
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      summary: Get all cars
+      tags:
+      - Cars
+  /api/v1/cars/{id}:
+    get:
+      description: Retrieve details of a specific car
+      parameters:
+      - description: Car ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Car details
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 'message: Car not found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get car details
+      tags:
+      - Cars
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a JWT token
+      parameters:
+      - description: User login data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT token and user info
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 'message: Invalid credentials'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login a user
+      tags:
+      - Authentication
+  /api/v1/payments:
+    get:
+      description: Retrieve payment history for the logged-in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Payment history
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: 'message: Internal server error'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get payment history
+      tags:
+      - Payments
+  /api/v1/payments/{id}:
+    get:
+      description: Retrieve details of a specific payment
+      parameters:
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Payment details
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 'message: Payment not found'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get payment details
+      tags:
+      - Payments
+  /api/v1/payments/webhook:
+    post:
+      consumes:
+      - application/json
+      description: Process payment webhook notifications
+      parameters:
+      - description: Webhook Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.WebhookPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Webhook processed'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: 'message: Unauthorized'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Handle payment webhook
+      tags:
+      - Payments
+  /api/v1/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: User registration data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'message: Registration successful'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'message: Error'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - Authentication
+  /api/v1/rentals:
+    get:
+      description: Retrieve all rentals made by the logged-in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of rentals
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: 'message: Internal server error'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get user rentals
+      tags:
+      - Rentals
+    post:
+      consumes:
+      - application/json
+      description: Create a new rental for a car
+      parameters:
+      - description: Rental request data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateRentalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Rental created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 'message: Bad request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a car rental
+      tags:
+      - Rentals
+  /api/v1/rentals/{id}/return:
+    post:
+      description: Complete a car rental by returning it
+      parameters:
+      - description: Rental ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Rental completed'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: 'message: Bad request'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Return a rented car
+      tags:
+      - Rentals
+swagger: "2.0"
